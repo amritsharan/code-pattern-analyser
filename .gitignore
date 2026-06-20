@@ -8,3 +8,5 @@ dsa_analyser.db-journal
 .DS_Store
 .vscode/
 .idea/
+
+.vercel
