@@ -70,7 +70,10 @@ def ai_detect_patterns(text, candidate_labels=None, threshold=0.3):
     return [label for label, score in zip(result['labels'], result['scores']) if score > threshold]
 
 # --- Database Integration ---
-DATABASE = 'dsa_analyser.db'
+if os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV'):
+    DATABASE = '/tmp/dsa_analyser.db'
+else:
+    DATABASE = 'dsa_analyser.db'
 
 def get_db():
     conn = sqlite3.connect(DATABASE)
@@ -348,6 +351,9 @@ def analyze_repo():
     repo_url = data.get('repo_url', '').strip()
     if not repo_url or not repo_url.startswith('https://github.com/'):
         return jsonify({'error': 'Invalid or missing GitHub repo URL.'}), 400
+        
+    if not shutil.which('git'):
+        return jsonify({'error': 'GitHub repository analysis is only supported in local run environments with the Git CLI installed. (Git binary not found on Vercel hosting)'}), 503
         
     temp_dir = tempfile.mkdtemp()
     try:
