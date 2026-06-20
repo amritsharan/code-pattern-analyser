@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+dsa_analyser.db
+dsa_analyser.db-journal
+.DS_Store
+.vscode/
+.idea/

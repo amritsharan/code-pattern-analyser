@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSA Pattern Analyser</title>
+    <!-- Premium Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="particle-bg"></canvas>
+
+    <!-- Header Section -->
+    <header class="main-header">
+        <div class="header-content">
+            <span class="logo">DSA <span class="logo-sub">Analyser</span></span>
+            <div class="user-profile hidden" id="user-profile-header">
+                <span class="welcome-msg">Welcome, <strong id="username-display">Coder</strong></span>
+                <button class="logout-btn" onclick="logout()">Sign Out</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="centered">
+        <!-- Register Container -->
+        <div class="card glass-card" id="register-container">
+            <div class="card-header">
+                <h1>Create Account</h1>
+                <p>Register to start analysing DSA code patterns</p>
+            </div>
+            <div class="form-group">
+                <input type="text" id="reg-username" placeholder="Create a username" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <input type="password" id="reg-password" placeholder="Create a password">
+            </div>
+            <button class="primary-btn" onclick="registerUser()">Register</button>
+            <button class="back-btn" onclick="showLogin()" type="button">Back to Login</button>
+            <div id="register-error" class="error-msg"></div>
+            <div id="register-success" class="success-msg"></div>
+        </div>
+
+        <!-- Login Container -->
+        <div class="card glass-card" id="login-container">
+            <div class="card-header">
+                <h1>Sign In</h1>
+                <p>Welcome back! Let's solve some problems.</p>
+            </div>
+            <div class="form-group">
+                <input type="text" id="username" placeholder="Username" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="Password">
+            </div>
+            <button class="primary-btn" onclick="login()">Sign In</button>
+            <button class="alt-btn" onclick="showRegister()" type="button">Create New Account</button>
+            <div id="login-error" class="error-msg"></div>
+        </div>
+
+        <!-- Main Dashboard Container (Hidden by default) -->
+        <div class="dashboard-container hidden" id="main-container">
+            <!-- Navigation Tabs -->
+            <div class="dashboard-tabs">
+                <button class="tab-btn active" id="tab-analyser" onclick="switchTab('analyser')">DSA Analyser</button>
+                <button class="tab-btn" id="tab-repo" onclick="switchTab('repo')">GitHub Repo Scanner</button>
+                <button class="tab-btn" id="tab-history" onclick="switchTab('history')">Analysis History</button>
+            </div>
+
+            <!-- Tab 1: DSA Analyser -->
+            <div class="tab-content" id="content-analyser">
+                <div class="analyser-grid">
+                    <div class="input-panel glass-card">
+                        <h2>Analyse Problem</h2>
+                        <form id="patternForm">
+                            <label for="desc">Problem Description</label>
+                            <textarea id="desc" name="desc" placeholder="Paste LeetCode, Codeforces, or CodeChef problem description here..."></textarea>
+                            
+                            <label for="cppcode">Code Snippet (C++, Python, Java - Optional)</label>
+                            <textarea id="cppcode" name="cppcode" class="code-editor" placeholder="Paste your C++, Python, or Java solution here..."></textarea>
+                            
+                            <div class="form-row">
+                                <div class="form-col">
+                                    <label for="platform">Platform</label>
+                                    <select id="platform" name="platform">
+                                        <option value="">Select Platform (optional)</option>
+                                        <option value="leetcode">LeetCode</option>
+                                        <option value="codechef">CodeChef</option>
+                                        <option value="codeforces">Codeforces</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="submit-btn">Run Pattern Analysis</button>
+                        </form>
+                    </div>
+
+                    <div class="output-panel">
+                        <!-- Detected Patterns Summary -->
+                        <div id="output" class="result-card glass-card" style="display:none;">
+                            <h3>Detected Patterns</h3>
+                            <div id="pattern-chips" class="pattern-chips-container"></div>
+                            <div id="platform-badge" class="platform-badge"></div>
+                        </div>
+
+                        <!-- Pattern Detailed View -->
+                        <div id="pattern-details-card" class="details-card glass-card" style="display:none;">
+                            <h3 id="details-pattern-title">Pattern Details</h3>
+                            
+                            <!-- Complexity Info Cards -->
+                            <div class="complexity-row">
+                                <div class="complexity-card">
+                                    <span class="complexity-label">Time Complexity</span>
+                                    <span class="complexity-val" id="time-complexity-val">O(1)</span>
+                                </div>
+                                <div class="complexity-card">
+                                    <span class="complexity-label">Space Complexity</span>
+                                    <span class="complexity-val" id="space-complexity-val">O(1)</span>
+                                </div>
+                            </div>
+
+                            <!-- Heuristic Explanation -->
+                            <div class="info-section">
+                                <h4>Detection Insight</h4>
+                                <p id="heuristic-explanation-val"></p>
+                            </div>
+
+                            <!-- Practice Problems -->
+                            <div class="info-section">
+                                <h4>Practice Problems</h4>
+                                <ul id="problems-list" class="problems-list"></ul>
+                            </div>
+                            
+                            <!-- Flowchart -->
+                            <div class="info-section">
+                                <h4>Execution Flowchart</h4>
+                                <div id="visualization" class="mermaid-container"></div>
+                            </div>
+
+                            <!-- Code Annotation -->
+                            <div class="info-section" id="annotated-code-section" style="display:none;">
+                                <h4>Source Code Annotation</h4>
+                                <pre id="annotated-code" class="code-output"></pre>
+                            </div>
+                        </div>
+
+                        <!-- Initial placeholder state -->
+                        <div class="placeholder-card glass-card" id="output-placeholder">
+                            <div class="placeholder-icon">🔍</div>
+                            <h3>Waiting for Input</h3>
+                            <p>Paste a problem description or solution code, and click "Run Pattern Analysis" to extract algorithmic patterns.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: GitHub Repo Scanner -->
+            <div class="tab-content hidden" id="content-repo">
+                <div class="repo-grid">
+                    <div class="repo-input-panel glass-card">
+                        <h2>GitHub Repository Analysis</h2>
+                        <p class="section-desc">Clone and scan a public repository for C++, Python, and Java files to index structural DSA patterns.</p>
+                        <div class="repo-form">
+                            <input type="text" id="repo-url" placeholder="GitHub Repository URL (e.g., https://github.com/username/repo)">
+                            <button type="button" class="submit-btn" onclick="analyzeRepo()">Start Scan</button>
+                        </div>
+                        <div id="repo-analyze-status" class="status-message"></div>
+                    </div>
+
+                    <div class="repo-results-panel">
+                        <!-- Chart container -->
+                        <div class="chart-card glass-card" id="repo-chart-container" style="display:none;">
+                            <h3>Pattern Frequency Dashboard</h3>
+                            <div class="canvas-wrapper">
+                                <canvas id="repo-analyze-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Stats Table -->
+                        <div class="table-card glass-card" id="repo-analyze-result" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Analysis History -->
+            <div class="tab-content hidden" id="content-history">
+                <div class="history-container glass-card">
+                    <h2>Your Recent Analyses</h2>
+                    <p class="section-desc">Review your query history. Click on any record to reload it in the main workspace.</p>
+                    <div id="history-list" class="history-list">
+                        <!-- History rows will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script imports -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        // Initialize Mermaid
+        if (window.mermaid) {
+            window.mermaid.initialize({
+                startOnLoad: false,
+                theme: 'dark',
+                securityLevel: 'loose',
+                themeVariables: {
+                    background: '#161B22',
+                    primaryColor: '#1f6feb',
+                    primaryTextColor: '#c9d1d9',
+                    lineColor: '#58a6ff',
+                    actorBorder: '#30363d',
+                    signalColor: '#58a6ff',
+                    signalTextColor: '#c9d1d9'
+                }
+            });
+        }
+
+        // Particle background animation
+        const canvas = document.getElementById('particle-bg');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        function initParticles() {
+            particles = [];
+            const count = Math.floor(window.innerWidth * window.innerHeight / 15000);
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    r: Math.random() * 1.5 + 0.5,
+                    dx: (Math.random() - 0.5) * 0.12,
+                    dy: (Math.random() - 0.5) * 0.12,
+                    alpha: Math.random() * 0.4 + 0.1
+                });
+            }
+        }
+        
+        function drawParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (const p of particles) {
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+                ctx.fillStyle = '#58a6ff';
+                ctx.fill();
+                ctx.restore();
+                
+                p.x += p.dx;
+                p.y += p.dy;
+                
+                if (p.x < 0) p.x = canvas.width;
+                if (p.x > canvas.width) p.x = 0;
+                if (p.y < 0) p.y = canvas.height;
+                if (p.y > canvas.height) p.y = 0;
+            }
+            requestAnimationFrame(drawParticles);
+        }
+        
+        initParticles();
+        drawParticles();
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            initParticles();
+        });
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
