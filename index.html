@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DSA Pattern Analyser</title>
+    <title>DSA Pattern Analyser & AI Problem Solver</title>
     <!-- Premium Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,13 +16,50 @@
     <!-- Header Section -->
     <header class="main-header">
         <div class="header-content">
-            <span class="logo">DSA <span class="logo-sub">Analyser</span></span>
+            <span class="logo">DSA <span class="logo-sub">AI Analyser</span></span>
             <div class="user-profile hidden" id="user-profile-header">
+                <button class="ai-settings-btn" onclick="openAiSettingsModal()" title="AI API Configuration">
+                    ⚙️ <span class="ai-btn-text">AI Settings</span>
+                    <span class="ai-indicator" id="ai-status-indicator"></span>
+                </button>
                 <span class="welcome-msg">Welcome, <strong id="username-display">Coder</strong></span>
                 <button class="logout-btn" onclick="logout()">Sign Out</button>
             </div>
         </div>
     </header>
+
+    <!-- AI Settings Modal -->
+    <div id="ai-settings-modal" class="modal-overlay hidden">
+        <div class="modal-card glass-card">
+            <div class="modal-header">
+                <h3>⚡ AI Engine Configuration</h3>
+                <button class="modal-close-btn" onclick="closeAiSettingsModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc">
+                    Connect an AI API for deep problem reasoning, automated boilerplate generation, and constraint-based complexity deduction.
+                </p>
+                <div class="form-group">
+                    <label for="ai-provider-select">AI Provider</label>
+                    <select id="ai-provider-select" onchange="onAiProviderChange()">
+                        <option value="gemini">Google Gemini API (Recommended - Gemini 1.5 Flash)</option>
+                        <option value="openai">OpenAI / Compatible API (GPT-4o-mini)</option>
+                        <option value="heuristic">Offline Heuristic Engine (No API Key required)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="api-key-group">
+                    <label for="api-key-input">API Key</label>
+                    <input type="password" id="api-key-input" placeholder="Paste your Gemini or OpenAI API Key here...">
+                    <span class="field-hint" id="api-key-hint">Keys are saved locally in your browser's secure storage.</span>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="primary-btn" onclick="saveAiSettings()">Save Settings</button>
+                    <button type="button" class="alt-btn" onclick="clearAiKey()">Reset Key</button>
+                </div>
+                <div id="ai-modal-status" class="status-msg"></div>
+            </div>
+        </div>
+    </div>
 
     <div class="centered">
         <!-- Register Container -->
@@ -64,22 +101,52 @@
         <div class="dashboard-container hidden" id="main-container">
             <!-- Navigation Tabs -->
             <div class="dashboard-tabs">
-                <button class="tab-btn active" id="tab-analyser" onclick="switchTab('analyser')">DSA Analyser</button>
-                <button class="tab-btn" id="tab-repo" onclick="switchTab('repo')">GitHub Repo Scanner</button>
-                <button class="tab-btn" id="tab-history" onclick="switchTab('history')">Analysis History</button>
+                <button class="tab-btn active" id="tab-analyser" onclick="switchTab('analyser')">⚡ DSA AI Analyser</button>
+                <button class="tab-btn" id="tab-profile" onclick="switchTab('profile')">📊 Profile Mastery</button>
+                <button class="tab-btn" id="tab-repo" onclick="switchTab('repo')">📁 GitHub Repo Scanner</button>
+                <button class="tab-btn" id="tab-history" onclick="switchTab('history')">🕒 Analysis History</button>
             </div>
 
             <!-- Tab 1: DSA Analyser -->
             <div class="tab-content" id="content-analyser">
                 <div class="analyser-grid">
                     <div class="input-panel glass-card">
-                        <h2>Analyse Problem</h2>
+                        <div class="panel-header-row">
+                            <h2>Analyse Problem</h2>
+                            <span class="active-engine-badge" id="active-engine-badge">⚡ Offline Heuristics</span>
+                        </div>
+
+                        <!-- One-Click URL Importer Widget -->
+                        <div class="url-importer-box">
+                            <label for="import-url-input">🔗 Quick Import from URL</label>
+                            <div class="url-input-row">
+                                <input type="url" id="import-url-input" placeholder="Paste LeetCode or Codeforces URL (e.g., https://leetcode.com/problems/two-sum/)">
+                                <button type="button" class="import-fetch-btn" id="import-fetch-btn" onclick="fetchProblemByUrl()">⚡ Fetch & Analyze</button>
+                            </div>
+                            <div id="import-url-status" class="import-status-text"></div>
+                            <div id="imported-meta-pills" class="imported-meta-pills" style="display:none;"></div>
+                        </div>
+
+                        <div class="divider-or"><span>OR PASTE MANUALLY</span></div>
+
                         <form id="patternForm">
                             <label for="desc">Problem Description</label>
-                            <textarea id="desc" name="desc" placeholder="Paste LeetCode, Codeforces, or CodeChef problem description here..."></textarea>
+                            <textarea id="desc" name="desc" placeholder="Paste LeetCode, Codeforces, or CodeChef problem description or question here..."></textarea>
                             
-                            <label for="cppcode">Code Snippet (C++, Python, Java - Optional)</label>
-                            <textarea id="cppcode" name="cppcode" class="code-editor" placeholder="Paste your C++, Python, or Java solution here..."></textarea>
+                            <div class="code-editor-header">
+                                <label for="cppcode">Solution Code Snippet (Optional)</label>
+                                <div class="code-editor-tools">
+                                    <select id="code-lang-select" onchange="onCodeLanguageChange()">
+                                        <option value="python">Python 3</option>
+                                        <option value="cpp">C++</option>
+                                        <option value="java">Java</option>
+                                        <option value="javascript">JavaScript</option>
+                                    </select>
+                                    <button type="button" class="editor-tool-btn" onclick="loadSampleCode()">Sample Code</button>
+                                    <button type="button" class="editor-tool-btn" onclick="clearCodeEditor()">Clear</button>
+                                </div>
+                            </div>
+                            <textarea id="cppcode" name="cppcode" class="code-editor" placeholder="Paste your solution or partial code snippet here... (Tab key supported)" onkeydown="handleCodeEditorKeydown(event)"></textarea>
                             
                             <div class="form-row">
                                 <div class="form-col">
@@ -87,26 +154,37 @@
                                     <select id="platform" name="platform">
                                         <option value="">Select Platform (optional)</option>
                                         <option value="leetcode">LeetCode</option>
-                                        <option value="codechef">CodeChef</option>
                                         <option value="codeforces">Codeforces</option>
+                                        <option value="codechef">CodeChef</option>
+                                        <option value="hackerrank">HackerRank</option>
+                                        <option value="geeksforgeeks">GeeksforGeeks</option>
                                     </select>
                                 </div>
                             </div>
-                            <button type="submit" class="submit-btn">Run Pattern Analysis</button>
+                            <button type="submit" class="submit-btn" id="run-analysis-btn">Run AI Pattern Analysis</button>
                         </form>
                     </div>
 
                     <div class="output-panel">
                         <!-- Detected Patterns Summary -->
                         <div id="output" class="result-card glass-card" style="display:none;">
-                            <h3>Detected Patterns</h3>
+                            <div class="output-header-flex">
+                                <h3>Detected Algorithmic Patterns</h3>
+                                <span id="confidence-pill" class="confidence-pill"></span>
+                            </div>
                             <div id="pattern-chips" class="pattern-chips-container"></div>
                             <div id="platform-badge" class="platform-badge"></div>
                         </div>
 
                         <!-- Pattern Detailed View -->
                         <div id="pattern-details-card" class="details-card glass-card" style="display:none;">
-                            <h3 id="details-pattern-title">Pattern Details</h3>
+                            <div class="details-header-row">
+                                <h3 id="details-pattern-title">Pattern Details</h3>
+                                <div class="details-header-actions">
+                                    <button type="button" class="export-notes-btn" onclick="exportStudyNotes()" id="export-notes-btn">📥 Export Study Notes</button>
+                                    <span class="mode-tag" id="analysis-mode-tag">AI Analysis</span>
+                                </div>
+                            </div>
                             
                             <!-- Complexity Info Cards -->
                             <div class="complexity-row">
@@ -120,28 +198,135 @@
                                 </div>
                             </div>
 
-                            <!-- Heuristic Explanation -->
+                            <!-- Why This Pattern? (Justification) -->
                             <div class="info-section">
-                                <h4>Detection Insight</h4>
-                                <p id="heuristic-explanation-val"></p>
+                                <h4>💡 Why this Pattern? (Algorithmic Justification)</h4>
+                                <p id="heuristic-explanation-val" class="section-paragraph"></p>
+                            </div>
+
+                            <!-- Constraint Analysis Section -->
+                            <div class="info-section" id="constraint-analysis-section">
+                                <h4>📊 Constraint & Complexity Deduction</h4>
+                                <p id="constraint-analysis-val" class="section-paragraph"></p>
+                            </div>
+
+                            <!-- Multi-Language Solution Boilerplates -->
+                            <div class="info-section" id="boilerplate-section">
+                                <div class="boilerplate-header">
+                                    <h4>💻 Solution Boilerplates</h4>
+                                    <div class="lang-tabs">
+                                        <button type="button" class="lang-tab-btn active" onclick="switchLanguageTab('cpp')">C++</button>
+                                        <button type="button" class="lang-tab-btn" onclick="switchLanguageTab('python')">Python</button>
+                                        <button type="button" class="lang-tab-btn" onclick="switchLanguageTab('java')">Java</button>
+                                        <button type="button" class="lang-tab-btn" onclick="switchLanguageTab('javascript')">JavaScript</button>
+                                    </div>
+                                    <button type="button" class="copy-code-btn" onclick="copyBoilerplateCode()" id="copy-boilerplate-btn">📋 Copy Code</button>
+                                </div>
+                                <pre id="boilerplate-code-view" class="code-output boilerplate-code"></pre>
+                            </div>
+
+                            <!-- Edge Cases & Common Traps Checklist -->
+                            <div class="info-section" id="edge-cases-section">
+                                <h4>⚠️ Edge Cases & Common Traps</h4>
+                                <ul id="edge-cases-list" class="edge-cases-list"></ul>
                             </div>
 
                             <!-- Practice Problems -->
                             <div class="info-section">
-                                <h4>Practice Problems</h4>
+                                <h4>🎯 Curated Practice Problems</h4>
                                 <ul id="problems-list" class="problems-list"></ul>
                             </div>
                             
-                            <!-- Flowchart -->
-                            <div class="info-section">
-                                <h4>Execution Flowchart</h4>
-                                <div id="visualization" class="mermaid-container"></div>
+                            <!-- Interactive Visualizer & Flowchart View Switcher -->
+                            <div class="info-section" id="interactive-visualization-section">
+                                <div class="vis-header-row">
+                                    <h4>🎬 Visual Execution & Simulation</h4>
+                                    <div class="vis-view-tabs">
+                                        <button type="button" class="vis-tab-btn active" id="vis-tab-sim" onclick="switchVisView('sim')">Interactive Simulator</button>
+                                        <button type="button" class="vis-tab-btn" id="vis-tab-flow" onclick="switchVisView('flow')">Flowchart Diagram</button>
+                                    </div>
+                                </div>
+
+                                <!-- View 1: Interactive Step-by-Step Simulator -->
+                                <div id="vis-view-simulator" class="simulator-wrapper">
+                                    <!-- Simulator Controls Bar -->
+                                    <div class="sim-controls-panel">
+                                        <div class="sim-btn-group">
+                                            <button type="button" class="sim-ctrl-btn" onclick="window.dsaSimulator.prevStep()" title="Previous Step">⏮️ Prev</button>
+                                            <button type="button" class="sim-ctrl-btn primary" id="sim-play-btn" onclick="window.dsaSimulator.togglePlay()">▶️ Auto-Play</button>
+                                            <button type="button" class="sim-ctrl-btn" onclick="window.dsaSimulator.nextStep()" title="Next Step">⏭️ Next</button>
+                                            <button type="button" class="sim-ctrl-btn" onclick="window.dsaSimulator.reset()" title="Reset to Start">🔄 Reset</button>
+                                        </div>
+
+                                        <div class="sim-speed-group">
+                                            <label for="sim-speed-select">Speed:</label>
+                                            <select id="sim-speed-select" onchange="window.dsaSimulator.setSpeed(Number(this.value))">
+                                                <option value="1500">0.75x</option>
+                                                <option value="1000" selected>1.0x</option>
+                                                <option value="500">2.0x</option>
+                                            </select>
+                                        </div>
+
+                                        <span id="sim-step-indicator" class="sim-step-badge">Step 1 of 1</span>
+                                    </div>
+
+                                    <!-- Custom Array / Input Modifier Bar -->
+                                    <div class="sim-custom-bar">
+                                        <input type="text" id="sim-custom-input" placeholder="Custom Array (e.g., 2, 7, 11, 15, 18)" value="1, 2, 4, 7, 11, 15, 18">
+                                        <input type="number" id="sim-custom-target" placeholder="Target / K" value="18" style="max-width: 110px;">
+                                        <button type="button" class="sim-apply-btn" onclick="applyCustomSimInput()">Apply Input</button>
+                                    </div>
+
+                                    <!-- Simulator Dynamic Canvas Container -->
+                                    <div id="simulator-canvas-container" class="simulator-canvas"></div>
+
+                                    <!-- Live Step Explanation Box -->
+                                    <div class="sim-log-box">
+                                        <span class="sim-log-icon">💡</span>
+                                        <span id="sim-log-message" class="sim-log-text">Initializing simulation...</span>
+                                    </div>
+                                </div>
+
+                                <!-- View 2: Mermaid Flowchart -->
+                                <div id="vis-view-flowchart" class="mermaid-view-wrapper" style="display:none;">
+                                    <div id="visualization" class="mermaid-container"></div>
+                                </div>
                             </div>
 
                             <!-- Code Annotation -->
                             <div class="info-section" id="annotated-code-section" style="display:none;">
-                                <h4>Source Code Annotation</h4>
+                                <h4>🔍 Source Code Pattern Highlights</h4>
                                 <pre id="annotated-code" class="code-output"></pre>
+                            </div>
+
+                            <!-- AST Static Code Complexity & Optimization Card -->
+                            <div class="info-section" id="ast-inspection-section" style="display:none;">
+                                <div class="ast-header-row">
+                                    <h4>🔬 Static AST Code Complexity & Optimization</h4>
+                                    <span class="ast-badge" id="ast-lang-badge">Python AST</span>
+                                </div>
+                                <div class="ast-metrics-grid">
+                                    <div class="ast-metric-box">
+                                        <span class="ast-metric-label">Estimated Time</span>
+                                        <span class="ast-metric-val" id="ast-time-val">O(N)</span>
+                                    </div>
+                                    <div class="ast-metric-box">
+                                        <span class="ast-metric-label">Estimated Space</span>
+                                        <span class="ast-metric-val" id="ast-space-val">O(1)</span>
+                                    </div>
+                                    <div class="ast-metric-box">
+                                        <span class="ast-metric-label">Max Loop Depth</span>
+                                        <span class="ast-metric-val" id="ast-loop-depth-val">1</span>
+                                    </div>
+                                    <div class="ast-metric-box">
+                                        <span class="ast-metric-label">Recursion Factor</span>
+                                        <span class="ast-metric-val" id="ast-recursion-val">No</span>
+                                    </div>
+                                </div>
+                                <div class="ast-optimizations-container">
+                                    <h5>💡 Actionable Optimization Insights</h5>
+                                    <ul id="ast-optimizations-list" class="ast-opt-list"></ul>
+                                </div>
                             </div>
                         </div>
 
@@ -149,13 +334,67 @@
                         <div class="placeholder-card glass-card" id="output-placeholder">
                             <div class="placeholder-icon">🔍</div>
                             <h3>Waiting for Input</h3>
-                            <p>Paste a problem description or solution code, and click "Run Pattern Analysis" to extract algorithmic patterns.</p>
+                            <p>Paste a competitive programming problem or solution code, and click <strong>"Run AI Pattern Analysis"</strong> to extract algorithmic patterns, optimal complexity, boilerplates, and flowcharts.</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tab 2: GitHub Repo Scanner -->
+            <!-- Tab 2: Profile Mastery & Pattern Radar -->
+            <div class="tab-content hidden" id="content-profile">
+                <div class="profile-grid">
+                    <div class="profile-input-panel glass-card">
+                        <h2>LeetCode Profile Mastery</h2>
+                        <p class="section-desc">Fetch your LeetCode problem-solving history to generate a DSA Pattern Radar chart, identify blind spots, and receive targeted practice recommendations.</p>
+                        <div class="profile-form">
+                            <input type="text" id="profile-username-input" placeholder="Enter LeetCode username (e.g., neal_wu)">
+                            <button type="button" class="submit-btn" id="analyze-profile-btn" onclick="analyzeLeetCodeProfile()">Analyze Profile</button>
+                        </div>
+                        <div id="profile-analyze-status" class="status-message"></div>
+
+                        <!-- Profile Overview Summary -->
+                        <div id="profile-summary-box" class="profile-summary-box" style="display:none;">
+                            <div class="summary-stat-row">
+                                <div class="stat-pill">Total Solved: <strong id="prof-total-solved">0</strong></div>
+                                <div class="stat-pill diff-easy">Easy: <strong id="prof-easy-solved">0</strong></div>
+                                <div class="stat-pill diff-med">Med: <strong id="prof-med-solved">0</strong></div>
+                                <div class="stat-pill diff-hard">Hard: <strong id="prof-hard-solved">0</strong></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-results-panel">
+                        <!-- Radar Chart Card -->
+                        <div class="chart-card glass-card" id="profile-chart-container" style="display:none;">
+                            <h3>DSA Pattern Mastery Radar</h3>
+                            <div class="radar-wrapper">
+                                <canvas id="profile-radar-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Strengths & Blind Spots Insights -->
+                        <div class="insights-card glass-card" id="profile-insights-container" style="display:none;">
+                            <div class="insights-row">
+                                <div class="insight-col strength-col">
+                                    <h4>🏆 Top Pattern Strengths</h4>
+                                    <ul id="profile-strengths-list" class="profile-pill-list"></ul>
+                                </div>
+                                <div class="insight-col blindspot-col">
+                                    <h4>🎯 Identified Blind Spots</h4>
+                                    <ul id="profile-blindspots-list" class="profile-pill-list"></ul>
+                                </div>
+                            </div>
+
+                            <div class="recommendations-section">
+                                <h4>📚 Targeted Skill-Bridge Practice</h4>
+                                <ul id="profile-recommendations-list" class="problems-list"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: GitHub Repo Scanner -->
             <div class="tab-content hidden" id="content-repo">
                 <div class="repo-grid">
                     <div class="repo-input-panel glass-card">
@@ -275,6 +514,7 @@
             initParticles();
         });
     </script>
+    <script src="visualizer.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

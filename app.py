@@ -49,24 +49,35 @@ from pattern_detector import (
     visualize_greedy_flowchart
 )
 
-# Try to load HuggingFace zero-shot pipeline for AI-based detection
-try:
-    from transformers import pipeline
-    # Load model (fallbacks to rule-based if transformers/torch is missing or errors out)
-    classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
-    HF_AVAILABLE = True
-except Exception as e:
-    print("[INFO] HuggingFace pipeline not available (falling back to rule-based):", e)
-    classifier = None
-    HF_AVAILABLE = False
+from ai_engine import analyze_dsa_problem
+from problem_scraper import scrape_problem
+from ast_analyzer import analyze_code_ast
+from profile_analyzer import fetch_leetcode_profile
+
+# Lazy-loaded HuggingFace pipeline for local AI-based detection
+classifier = None
+HF_CHECKED = False
+
+def get_hf_classifier():
+    global classifier, HF_CHECKED
+    if not HF_CHECKED:
+        HF_CHECKED = True
+        try:
+            from transformers import pipeline
+            classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+        except Exception as e:
+            print("[INFO] HuggingFace pipeline not available:", e)
+            classifier = None
+    return classifier
 
 # Helper for AI-based detection
 def ai_detect_patterns(text, candidate_labels=None, threshold=0.3):
-    if not HF_AVAILABLE or classifier is None:
+    clf = get_hf_classifier()
+    if clf is None:
         return []
     if candidate_labels is None:
         candidate_labels = list(dsa_patterns.keys())
-    result = classifier(text, candidate_labels)
+    result = clf(text, candidate_labels)
     return [label for label, score in zip(result['labels'], result['scores']) if score > threshold]
 
 # --- Database Integration ---
@@ -217,6 +228,68 @@ def login():
 def logout():
     session.pop('username', None)
     return jsonify({'message': 'Logged out'})
+
+@app.route('/api/scrape-problem', methods=['POST'])
+@login_required
+def scrape_problem_endpoint():
+    data = request.get_json() or {}
+    url = data.get('url', '').strip()
+    if not url:
+        return jsonify({'error': 'Problem URL is required.'}), 400
+        
+    try:
+        scraped_data = scrape_problem(url)
+        return jsonify(scraped_data)
+    except Exception as e:
+        return jsonify({'error': f'Failed to scrape problem: {str(e)}'}), 400
+
+@app.route('/api/analyze-code-ast', methods=['POST'])
+@login_required
+def analyze_code_ast_endpoint():
+    data = request.get_json() or {}
+    code = data.get('code', '').strip()
+    language = data.get('language', 'python').strip()
+    if not code:
+        return jsonify({'error': 'No code provided.'}), 400
+        
+    analysis = analyze_code_ast(code, language=language)
+    return jsonify(analysis)
+
+@app.route('/api/analyze-profile', methods=['POST'])
+@login_required
+def analyze_profile_endpoint():
+    data = request.get_json() or {}
+    username = data.get('username', '').strip()
+    if not username:
+        return jsonify({'error': 'LeetCode username is required.'}), 400
+        
+    try:
+        profile_data = fetch_leetcode_profile(username)
+        return jsonify(profile_data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/ai-analyze', methods=['POST'])
+@login_required
+def ai_analyze():
+    data = request.get_json() or {}
+    text = data.get('text', '').strip()
+    code = data.get('code', '').strip()
+    platform = data.get('platform', '').strip()
+    api_key = request.headers.get('X-Gemini-Key') or data.get('apiKey', '').strip()
+    api_provider = request.headers.get('X-AI-Provider') or data.get('apiProvider', 'gemini')
+
+    if not text and not code:
+        return jsonify({'error': 'Please provide a problem description or code snippet.'}), 400
+
+    analysis_result = analyze_dsa_problem(
+        problem_text=text,
+        code_snippet=code,
+        platform=platform,
+        api_key=api_key if api_key else None,
+        api_provider=api_provider
+    )
+    return jsonify(analysis_result)
 
 @app.route('/detect', methods=['POST'])
 @login_required

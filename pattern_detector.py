@@ -245,16 +245,27 @@ PATTERN_INFO = {
 }
 
 # 3. Text keyword classifier fallback
+# 3. Text keyword classifier with weighted scoring
 def detect_patterns(text):
     text = text.lower()
-    detected = []
+    pattern_scores = {}
+    
     for pattern, keywords in dsa_patterns.items():
+        score = 0
         for kw in keywords:
-            # Match whole words/phrases to prevent substring matches (like 'bst' in 'substring')
-            if re.search(r'\b' + re.escape(kw) + r'\b', text):
-                detected.append(pattern)
-                break
-    return detected
+            # Multi-word exact phrases get highest weight (e.g. "binary search" > "sorted")
+            matches = len(re.findall(r'\b' + re.escape(kw) + r'\b', text))
+            if matches > 0:
+                word_count = len(kw.split())
+                char_weight = len(kw)
+                score += matches * (word_count * 10 + char_weight)
+        
+        if score > 0:
+            pattern_scores[pattern] = score
+            
+    # Sort patterns in descending order of match relevance score
+    sorted_patterns = sorted(pattern_scores.keys(), key=lambda p: pattern_scores[p], reverse=True)
+    return sorted_patterns
 
 # 4. Multi-language Heuristics Code Pattern Analyzers
 def detect_two_pointers(code):
